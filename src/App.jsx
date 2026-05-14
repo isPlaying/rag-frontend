@@ -70,8 +70,9 @@ export default function App() {
         throw new Error(`Request failed: ${res.status}`);
       }
 
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder("utf-8");
+      const reader = res.body
+        .pipeThrough(new TextDecoderStream())
+        .getReader();
       let buffer = "";
       let fullText = "";
       const processEventBlock = (block) => {
@@ -136,9 +137,8 @@ export default function App() {
 
       while (true) {
         const { value, done } = await reader.read();
-        const chunk = value ? decoder.decode(value, { stream: true }) : "";
-        if (chunk) {
-          buffer += chunk;
+        if (value) {
+          buffer += value;
         }
 
         if (done) {
